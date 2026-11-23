@@ -57,7 +57,7 @@ When the agent has External Auth configured, send your own end user's JWT as a h
 X-External-User-Token: <end_user_jwt>
 ```
 
-It is validated against the agent's identity-provider configuration on connect, and must then be repeated on **every** `user_message` as `ext_token` — otherwise the message is rejected with `missing_ext_token`. See [External Authentication](/amas/studio/external-auth).
+For an agent that uses the **Unverified JSON** validation type, the token is a plain JSON object instead: `{"ext_user_id": "<id>", "ext_tenant_id": "<id>"}` (`ext_tenant_id` is optional; no signature is checked). It is validated against the agent's identity-provider configuration on connect, and must then be repeated on **every** `user_message` as `ext_token` — otherwise the message is rejected with `missing_ext_token`. See [External Authentication](/amas/studio/external-auth).
 
 ### Close codes
 

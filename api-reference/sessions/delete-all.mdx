@@ -5,10 +5,14 @@ openapi: 'DELETE /api/v1/sessions/delete-all/'
 
 Delete all sessions owned by the authenticated user.
 
+<Note>
+Public chatbot embeds (agent-key callers) cannot use this endpoint: it would delete every session of the agent's owner, so they get `403`.
+</Note>
+
 ## Headers
 
 <ParamField header="X-External-User-Token" type="string">
-  Optional JWT token for external user identification (company-specific).
+  Optional token for external user identification (company-specific): a JWT, or a JSON object `{ext_user_id, ext_tenant_id?}` when the agent uses Unverified JSON.
 </ParamField>
 
 <CodeGroup>

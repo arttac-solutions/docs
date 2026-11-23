@@ -31,6 +31,17 @@ const sessions = await response.json();
 ```
 </CodeGroup>
 
+## Query parameters
+
+<ParamField query="ext_tenant_id" type="string">
+  Only sessions bound to this external tenant id (the billing unit sent by your embed). Account owner only; ignored for public agent-key callers.
+</ParamField>
+<ParamField query="ext_user_id" type="string">
+  Only sessions bound to this external user id. Account owner only; ignored for public agent-key callers.
+</ParamField>
+
+Public chatbot sessions also carry `ext_tenant_id` and `ext_user_id` in the response (`null` when none was sent).
+
 ## Response
 
 Returns a plain array of session objects (this endpoint is not paginated). Sessions without messages are left out unless you pass `has_messages=false`:
