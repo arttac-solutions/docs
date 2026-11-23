@@ -273,11 +273,11 @@ window.artaios.updateExternalIds({
 window.artaios.updateExternalIds({});
 ```
 
-Invalid ids leave the current ones in place. A conversation belongs to the ids it started with, so the conversation that is open during the change cannot be continued with the new ids; start a new chat after the change.
+Invalid ids leave the current ones in place. A conversation that was started without ids is bound to the first ids sent in it and continues. A conversation that is already bound to ids cannot be continued with other ids or after a logout, so the widget starts a new chat when the visitor's identity changes. You can call `updateExternalIds` right after `initialize`.
 
 ##### Option 2: signed JWT (`userToken`)
 
-Your server signs a JWT with the user id in `sub` (or the claim configured on the agent) and, optionally, the tenant id in a tenant claim configured on the agent. Pass it as `userToken`:
+Your server signs a JWT with the user id in `sub` (or the claim configured on the agent; a signed token without it is an anonymous visitor) and, optionally, the tenant id in a tenant claim configured on the agent. Pass it as `userToken`:
 
 ```javascript
 window.artaios.initialize({

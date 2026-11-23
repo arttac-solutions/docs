@@ -170,7 +170,7 @@ Choose how tokens are verified. Only the fields relevant to the selected type ar
 
 ### Common Fields
 
-These optional fields apply to every validation type:
+These optional fields apply to every signed validation type. Unverified JSON takes none of them:
 
 <ParamField path="Issuer" type="string">
   Expected `iss` claim. When set, tokens with a different issuer are rejected.
@@ -201,7 +201,8 @@ Every conversation of a public chatbot records the visitor's **user id** and, wh
 - A visitor sees, reopens and deletes only conversations bound to the **same tenant and user**. A visitor without a tenant and a visitor with one are two different visitors.
 - A visitor without ids lists no conversations. They can chat only in the conversation they just created.
 - Usage (tokens) is recorded per tenant and user, which lets you bill your own customers.
-- The ids are fixed when the conversation is created and never change.
+- A conversation started without ids is bound to the first ids sent in it. A bound conversation never changes its ids and cannot be continued with other ids or after logout.
+- A validly signed token without a user claim (for example a signed-out visitor) is an anonymous visitor: it can chat but lists no history.
 
 As the account owner you can filter the session list by `ext_tenant_id` and `ext_user_id`. See [List Sessions](/api-reference/sessions/list).
 

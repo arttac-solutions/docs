@@ -40,7 +40,7 @@ const sessions = await response.json();
   Only sessions bound to this external user id. Account owner only; ignored for public agent-key callers.
 </ParamField>
 
-Public chatbot sessions also carry `ext_tenant_id` and `ext_user_id` in the response (`null` when none was sent).
+Every session in the response carries `ext_tenant_id` and `ext_user_id` (`null` or empty when none was recorded).
 
 ## Response
 

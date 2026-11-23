@@ -57,7 +57,7 @@ When the agent has External Auth configured, send your own end user's JWT as a h
 X-External-User-Token: <end_user_jwt>
 ```
 
-For an agent that uses the **Unverified JSON** validation type, the token is a plain JSON object instead: `{"ext_user_id": "<id>", "ext_tenant_id": "<id>"}` (`ext_tenant_id` is optional; no signature is checked). It is validated against the agent's identity-provider configuration on connect, and must then be repeated on **every** `user_message` as `ext_token` — otherwise the message is rejected with `missing_ext_token`. See [External Authentication](/amas/studio/external-auth).
+For an agent that uses the **Unverified JSON** validation type, the token is a plain JSON object instead: `{"ext_user_id": "<id>", "ext_tenant_id": "<id>"}` (`ext_tenant_id` is optional; no signature is checked). It is validated against the agent's identity-provider configuration on connect, and can be repeated on a `user_message` as `ext_token` to switch identity; without one the token of the connection is used. A bound session reached without a matching token is refused with `invalid_session`. See [External Authentication](/amas/studio/external-auth).
 
 ### Close codes
 
@@ -170,7 +170,7 @@ Run the agent on a user turn. This is also where **variables** are supplied.
 </ParamField>
 
 <ParamField body="ext_token" type="string">
-  The end user's external JWT. **Required on every message** when the session was created with an external identity.
+  The end user's external token. Optional: it switches the identity for this and the following messages; without it the token the connection was opened with is used. A session bound to an external identity answers a missing or wrong token with `invalid_session`.
 </ParamField>
 
 ### `hitl_response`
@@ -545,7 +545,6 @@ Returned on the `error` message as `error_code`.
 | `connect_failed` / `reconnect_failed` / `disconnect_failed` | The corresponding handler failed |
 | `session_id_not_found` | No session could be resolved for the connection |
 | `empty_content` | `user_message.content` carries no usable turn |
-| `missing_ext_token` | Session has an external identity but `ext_token` was not sent |
 | `execution_start_failed` / `execution_error` | The run could not be started, or failed while starting |
 | `execution_cancel_failed` / `execution_cancel_error` | Cancellation failed |
 | `user_message_failed` | The user message could not be handled |
