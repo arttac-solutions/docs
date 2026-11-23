@@ -1,6 +1,6 @@
 ---
 title: "External Auth Setup"
-description: "Configure how external user tokens are validated so signed-in users can use your public agents"
+description: "Configure how external user tokens and ids are validated so identified users can use your public agents"
 ---
 
 External Auth lets you connect your own identity provider (IdP) to AMAS so that **signed-in users** can use your public chatbots. When a user chats, their token (JWT) is validated against the sign-in system you configure here. Each configuration is scoped to your company and can be reused across multiple agents.
@@ -14,6 +14,8 @@ External Auth lets you connect your own identity provider (IdP) to AMAS so that 
 - You enabled **Public Access** on an agent and chose **Signed-in users only**.
 - You want only verified users from your identity provider (for example Microsoft Entra ID or any OpenID Connect provider) to chat.
 - You want each user's conversations saved to their personal Library.
+- You want to attribute usage to your own customers (a **tenant id**) for billing.
+- Your site cannot sign tokens (for example a CMS): use **Unverified JSON** to send your own user and tenant ids instead. See [Validation Types](#validation-types).
 
 <Info>
 You select a configured sign-in system per agent in the agent's **General** settings. See [Agent Management](/amas/studio/my-agents#agent-settings).
@@ -147,6 +149,16 @@ Choose how tokens are verified. Only the fields relevant to the selected type ar
     </ParamField>
   </Tab>
 
+  <Tab title="Unverified JSON">
+    For hosts that know their visitor but cannot sign tokens, such as a CMS. The embed sends your own ids as plain JSON; **no signature is checked**. This type has no other fields.
+
+    The visitor's ids are `ext_user_id` (required) and `ext_tenant_id` (optional), sent by the embed from the `extUserId` and `extTenantId` options. See [Embedding Chatbot](/documentation/integration/chatbot-integration#user-identification).
+
+    <Warning>
+    Anyone who has the public agent key can claim any user or tenant id. They can read, continue and delete that visitor's conversations and charge usage to any tenant. Use random, unguessable ids such as UUIDs, never emails or counters, and treat usage per tenant as an estimate rather than proof for an invoice dispute. Use a signed validation type when you need verified identities.
+    </Warning>
+  </Tab>
+
   <Tab title="Static Public Key">
     Validates tokens against a fixed PEM key you paste in.
 
@@ -172,12 +184,26 @@ These optional fields apply to every validation type:
 <ParamField path="User Identifier Claim" type="string" default="sub">
   The claim used to identify the user (for example `sub` or `email`).
 </ParamField>
+<ParamField path="Tenant Identifier Claim" type="string">
+  Optional claim that carries your customer's tenant id (for example `org_id`). Leave it blank if your tokens carry no tenant. The tenant id is stored with each conversation and with its usage, so usage can be split per customer. Add the claim to **Enforced Required Claims** to require it. Not used by the Unverified JSON type, which takes the tenant from the embed.
+</ParamField>
 <ParamField path="Allowed Algorithms" type="array">
   Comma-separated list of accepted signing algorithms (for example `RS256`). Sensible defaults are applied per validation type.
 </ParamField>
 <ParamField path="Enforced Required Claims" type="array">
   Comma-separated claims (other than the user identifier) that MUST be present in the token for validation to succeed (for example `email, roles`).
 </ParamField>
+
+## User and Tenant Ids
+
+Every conversation of a public chatbot records the visitor's **user id** and, when sent, the **tenant id**:
+
+- A visitor sees, reopens and deletes only conversations bound to the **same tenant and user**. A visitor without a tenant and a visitor with one are two different visitors.
+- A visitor without ids lists no conversations. They can chat only in the conversation they just created.
+- Usage (tokens) is recorded per tenant and user, which lets you bill your own customers.
+- The ids are fixed when the conversation is created and never change.
+
+As the account owner you can filter the session list by `ext_tenant_id` and `ext_user_id`. See [List Sessions](/api-reference/sessions/list).
 
 ## Managing Versions
 
@@ -211,7 +237,7 @@ Before relying on a configuration, validate a real token against it.
     Paste a token issued by your identity provider.
   </Step>
   <Step title="Run the test">
-    Click **Test Token**. The result shows whether the token is valid, any validation errors, the resolved **user identifier**, and the decoded claims.
+    Click **Test Token**. The result shows whether the token is valid, any validation errors, the resolved **user identifier**, the **tenant identifier** (when a tenant claim is configured), and the decoded claims.
     <Check>A valid token returns "Token is valid" with the expected user identifier.</Check>
   </Step>
 </Steps>

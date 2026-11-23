@@ -229,16 +229,68 @@ The `voiceConfig` object configures audio output voice settings (requires `enabl
 
 #### User identification
 
-Pass a `userToken` (a JWT with a `sub` claim) to enable chat history persistence across sessions. Without a token, each page load starts a fresh conversation.
+Without an identity, a visitor can chat but cannot reopen past conversations, and usage cannot be attributed to your customers. There are two ways to identify a visitor. The agent owner picks the matching mode in [External Auth Setup](/amas/studio/external-auth).
 
-You can update the token after initialization — for example, after a user logs in:
+| Option | Type | Purpose |
+|--------|------|---------|
+| `userToken` | `string` | A signed JWT from your server. The signature is verified, so a visitor cannot claim someone else's identity. |
+| `extUserId` | `string` | Your own identifier for the end user, without a JWT. Required for an identity. |
+| `extTenantId` | `string` | Your customer (the billing unit) the end user belongs to. Optional, and needs `extUserId`. |
+
+##### Option 1: your own ids (`extUserId`, `extTenantId`)
+
+For hosts that cannot sign tokens, such as a CMS. The agent must use the **Unverified JSON** validation type.
 
 ```javascript
-// After the user authenticates on your site
-window.artaios.updateUserToken('eyJhbGciOiJIUz...');
+window.artaios.initialize({
+  elementId: 'artaios-chatbot-root',
+  agentKey: 'YOUR_AGENT_KEY',
+  extTenantId: 'c9f0f895-fb98-4b91-9e3c-1a2b3c4d5e6f', // optional
+  extUserId: '8f14e45f-ceea-467a-9b36-ffcd2c1b9a6e',
+});
 ```
 
-This updates the active WebSocket connection without reinitializing the widget.
+With ids set:
+
+- The visitor sees only the conversations created with the **same** tenant id and user id. A conversation started without a tenant is not visible with one, and the other way round.
+- Token usage is recorded per tenant and per user, so you can bill your own customers by tenant.
+
+Each id is 1-255 printable ASCII characters (no umlauts, no line breaks). `extTenantId` without `extUserId` is an error, and so is `userToken` together with the ids (`userToken` wins). Invalid values are reported in the browser console and nothing is sent.
+
+<Warning>
+The ids are **not verified**. The agent key is public, so anyone who knows or guesses a visitor's ids can read, continue and delete that visitor's conversations, and can charge usage to any tenant. Use random, unguessable ids such as UUIDs and map them to your users on your side. Never use email addresses, names, customer numbers or counters. If you need verified identities, use a signed JWT.
+</Warning>
+
+Change the ids after initialization, for example after a login or logout:
+
+```javascript
+window.artaios.updateExternalIds({
+  extTenantId: 'c9f0f895-fb98-4b91-9e3c-1a2b3c4d5e6f',
+  extUserId: '8f14e45f-ceea-467a-9b36-ffcd2c1b9a6e',
+});
+
+// After a logout: no ids, the visitor is anonymous again.
+window.artaios.updateExternalIds({});
+```
+
+Invalid ids leave the current ones in place. A conversation belongs to the ids it started with, so the conversation that is open during the change cannot be continued with the new ids; start a new chat after the change.
+
+##### Option 2: signed JWT (`userToken`)
+
+Your server signs a JWT with the user id in `sub` (or the claim configured on the agent) and, optionally, the tenant id in a tenant claim configured on the agent. Pass it as `userToken`:
+
+```javascript
+window.artaios.initialize({
+  elementId: 'artaios-chatbot-root',
+  agentKey: 'YOUR_AGENT_KEY',
+  userToken: 'eyJhbGciOiJSUzI1NiIs...',
+});
+
+// After your server issued a fresh token, for example after login:
+window.artaios.updateUserToken('eyJhbGciOiJSUzI1NiIs...');
+```
+
+Both calls update the active WebSocket connection without reinitializing the widget.
 
 ### Configuration examples
 
@@ -379,6 +431,8 @@ window.artaios.initialize({
 - **Loads locally but not in production**: Verify your production domain is allowlisted in agent settings.
 - **Console shows a script error**: Confirm the `scriptElement.src` URL is reachable from your site.
 - **Agent Key error**: Ensure you copied the full Agent Key without extra spaces or characters.
+- **Visitor's past chats are missing**: The visitor must be sent with the same `extTenantId` and `extUserId` (or the same JWT identity) that the conversation started with. A visitor without ids lists no conversations.
+- **Ids are rejected**: The agent must use the **Unverified JSON** validation type, each id must be 1-255 printable ASCII characters, and `extTenantId` needs `extUserId`.
 
 ## Next steps
 
